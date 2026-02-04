@@ -22,6 +22,7 @@ export function createServer(options: ServerOptions): ServerInstance {
   const { publicDir, watch = false } = options;
 
   let watcher: FileWatcher | null = null;
+  let heartbeatInterval: ReturnType<typeof setInterval> | null = null;
   const sseClients: Set<SSEClient> = new Set();
 
   const injectReloadScript = (html: string): string => {
@@ -36,6 +37,13 @@ export function createServer(options: ServerOptions): ServerInstance {
         client.write('event: reload\ndata: {}\n\n');
       }
     });
+
+    // Send heartbeat every 30 seconds to keep connections alive
+    heartbeatInterval = setInterval(() => {
+      for (const client of sseClients) {
+        client.write(': heartbeat\n\n');
+      }
+    }, 30000);
 
     // SSE endpoint
     app.get('/events', (req, res) => {
@@ -91,6 +99,9 @@ export function createServer(options: ServerOptions): ServerInstance {
   return {
     app,
     async close() {
+      if (heartbeatInterval) {
+        clearInterval(heartbeatInterval);
+      }
       if (watcher) {
         await watcher.close();
       }

@@ -2,6 +2,7 @@
 
 import { Command } from 'commander';
 import { createServer, startServer } from './server.js';
+import { validatePublicDir } from './public-dir.js';
 
 const program = new Command();
 
@@ -10,11 +11,24 @@ program
   .description('A tiny web server for publishing Markdown documents')
   .version('0.0.1')
   .option('-p, --port <number>', 'port number to listen on', '3000')
+  .option('-P, --public <path>', 'directory to serve markdown files from')
   .option('-w, --watch', 'watch for file changes and auto-reload')
   .action(async (options) => {
     const port = parseInt(options.port, 10);
-    const publicDir = process.cwd();
     const watch = options.watch ?? false;
+
+    // Validate and resolve public directory
+    let publicDir: string;
+    try {
+      publicDir = validatePublicDir(options.public ?? process.cwd());
+    } catch (error) {
+      if (error instanceof Error) {
+        console.error(`Error: ${error.message}`);
+      } else {
+        console.error('Error: Failed to validate public directory.');
+      }
+      process.exit(1);
+    }
 
     const serverInstance = createServer({ publicDir, watch });
 

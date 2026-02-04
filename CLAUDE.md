@@ -13,6 +13,9 @@
 2. Design the architecture and write it down in `docs/[ISSUE-NUMBER]-[SHORT-DESCRIPTION]/design.md`.
 3. Plan the implementation tasks and create a checklist in `docs/[ISSUE-NUMBER]-[SHORT-DESCRIPTION]/tasks.md`.
 5. You must be approved by the user before starting the implementation.
+6. Implement the tasks one by one, following TDD principles after approval.
+7. After completing the implementation, create a pull request to merge the feature branch into the `main` branch.
+8. Review the code and write a review feedback to the pull-request.
 
 ## Documents
 

@@ -22,6 +22,15 @@ program
       console.log('Watch mode enabled. Files will be monitored for changes.');
     }
 
+    const shutdown = async () => {
+      console.log('\nShutting down...');
+      await serverInstance.close();
+      process.exit(0);
+    };
+
+    process.on('SIGINT', shutdown);
+    process.on('SIGTERM', shutdown);
+
     await startServer(serverInstance.app, port);
   });
 

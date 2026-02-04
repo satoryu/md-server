@@ -39,9 +39,12 @@ flowchart TB
 
 **Interface Changes:**
 ```typescript
-// New option added to program
+// New option added to program (no default value to avoid path resolution in --help)
 program
-  .option('-P, --public <path>', 'directory to serve markdown files from', process.cwd())
+  .option('-P, --public <path>', 'directory to serve markdown files from')
+
+// Default handled in action handler
+const publicDir = validatePublicDir(options.public ?? process.cwd());
 ```
 
 ### Unchanged Components
@@ -111,6 +114,6 @@ Error: Directory '<path>' does not exist or is not accessible.
    - The path exists
    - The path is a directory (not a file)
 
-3. **Commander Default**: Set `process.cwd()` as the default value so existing behavior is preserved.
+3. **Default Handling**: Handle `process.cwd()` default in the action handler rather than as commander's default value. This avoids unnecessary path resolution when displaying `--help` and keeps the help output clean.
 
-4. **Short Option**: Use `-P` (uppercase) to avoid conflict with potential future options like `-p` for port (though `-p` is already used for port).
+4. **Short Option**: Use `-P` (uppercase) since `-p` is already used for `--port`. While uppercase short options are less common, this is a reasonable choice to avoid conflicts.

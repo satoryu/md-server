@@ -55,13 +55,19 @@ npm run test
 
 ## Branching Strategy
 
-Git flow is used as the branching strategy.
+GitHub flow is used as the branching strategy.
 
 - `main` branch: This is the production-ready branch. Only code that has been tested and approved should be merged into this branch.
-- `develop` branch: This is the integration branch for features. All feature branches should be merged into this branch first.
-- `feature/[ISSUE-NUMBER]-[SHORT-DESCRIPTION]` branches: These branches are used for developing new features. They should be created from the `develop` branch and merged back into `develop` when the feature is complete.
+- `feature/[ISSUE-NUMBER]-[SHORT-DESCRIPTION]` branches: These branches are used for developing new features. They should be created from the `main` branch and merged back into `main` when the feature is complete.
 
 ## Code Reviews
 
-After completing the implementation of a feature, you must create a pull request to merge the `feature/[ISSUE-NUMBER]-[SHORT-DESCRIPTION]` branch into the `develop` branch.
+After completing the implementation of a feature, you must create a pull request to merge the `feature/[ISSUE-NUMBER]-[SHORT-DESCRIPTION]` branch into the `main` branch.
 Then you must review the code by yourself and write a review feedback to the pull-request, ensure that it meets the requirements and passes all tests before merging.
+
+In review phase, you must focus on the following aspects:
+- Correctness
+- Readability
+- Performance
+- Security
+- Maintainability

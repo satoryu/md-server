@@ -1,15 +1,56 @@
-import express, { type Express } from 'express';
+import express, { type Express, type Response } from 'express';
 import { readdirSync, readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { convertMarkdownToHtml, wrapWithHtmlTemplate } from './markdown.js';
+import { createWatcher, type FileWatcher } from './watcher.js';
+import { getReloadScript } from './reload-script.js';
 
 export interface ServerOptions {
   publicDir: string;
+  watch?: boolean;
 }
 
-export function createServer(options: ServerOptions): Express {
+export interface ServerInstance {
+  app: Express;
+  close(): Promise<void>;
+}
+
+type SSEClient = Response;
+
+export function createServer(options: ServerOptions): ServerInstance {
   const app = express();
-  const { publicDir } = options;
+  const { publicDir, watch = false } = options;
+
+  let watcher: FileWatcher | null = null;
+  const sseClients: Set<SSEClient> = new Set();
+
+  const injectReloadScript = (html: string): string => {
+    if (!watch) return html;
+    return html.replace('</body>', `${getReloadScript()}</body>`);
+  };
+
+  if (watch) {
+    watcher = createWatcher(publicDir);
+    watcher.on('change', () => {
+      for (const client of sseClients) {
+        client.write('event: reload\ndata: {}\n\n');
+      }
+    });
+
+    // SSE endpoint
+    app.get('/events', (req, res) => {
+      res.setHeader('Content-Type', 'text/event-stream');
+      res.setHeader('Cache-Control', 'no-cache');
+      res.setHeader('Connection', 'keep-alive');
+      res.flushHeaders();
+
+      sseClients.add(res);
+
+      req.on('close', () => {
+        sseClients.delete(res);
+      });
+    });
+  }
 
   // GET / - List markdown files
   app.get('/', (_req, res) => {
@@ -26,7 +67,7 @@ export function createServer(options: ServerOptions): Express {
       </ul>
     `;
 
-    const html = wrapWithHtmlTemplate(content, 'Markdown Files');
+    const html = injectReloadScript(wrapWithHtmlTemplate(content, 'Markdown Files'));
     res.type('html').send(html);
   });
 
@@ -42,12 +83,23 @@ export function createServer(options: ServerOptions): Express {
 
     const markdown = readFileSync(filepath, 'utf-8');
     const htmlContent = convertMarkdownToHtml(markdown);
-    const html = wrapWithHtmlTemplate(htmlContent, filename);
+    const html = injectReloadScript(wrapWithHtmlTemplate(htmlContent, filename));
 
     res.type('html').send(html);
   });
 
-  return app;
+  return {
+    app,
+    async close() {
+      if (watcher) {
+        await watcher.close();
+      }
+      for (const client of sseClients) {
+        client.end();
+      }
+      sseClients.clear();
+    },
+  };
 }
 
 export function startServer(app: Express, port: number): Promise<void> {

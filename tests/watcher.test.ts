@@ -6,7 +6,10 @@ import { tmpdir } from 'node:os';
 
 function waitForReady(watcher: FileWatcher): Promise<void> {
   return new Promise((resolve) => {
-    watcher.on('ready', () => resolve());
+    watcher.on('ready', () => {
+      // Small delay to ensure watcher is fully initialized
+      setTimeout(resolve, 100);
+    });
   });
 }
 

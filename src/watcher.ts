@@ -17,8 +17,6 @@ export function createWatcher(dir: string): FileWatcher {
   const watcher = chokidar.watch(dir, {
     persistent: true,
     ignoreInitial: true,
-    usePolling: true,
-    interval: 100,
   });
 
   const isMarkdownFile = (path: string): boolean => path.endsWith('.md');

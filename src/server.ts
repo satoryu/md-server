@@ -85,7 +85,7 @@ export function createServer(options: ServerOptions): ServerInstance {
 
   // GET /*.md - Serve markdown file as HTML (supports subdirectories)
   app.get('/*.md', (req, res) => {
-    const requestPath = req.params[0] + '.md';
+    const requestPath = req.path.slice(1);
     const validation = validateAndResolvePath(requestPath, publicDir);
 
     if (!validation.valid) {

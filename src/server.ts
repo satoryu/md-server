@@ -1,9 +1,10 @@
 import express, { type Express, type Response } from 'express';
-import { readdirSync, readFileSync, existsSync } from 'node:fs';
-import { join } from 'node:path';
+import { readFileSync } from 'node:fs';
 import { convertMarkdownToHtml, wrapWithHtmlTemplate } from './markdown.js';
 import { createWatcher, type FileWatcher } from './watcher.js';
 import { getReloadScript } from './reload-script.js';
+import { validateAndResolvePath } from './path-validator.js';
+import { scanMarkdownFiles } from './file-scanner.js';
 
 export interface ServerOptions {
   publicDir: string;
@@ -60,12 +61,12 @@ export function createServer(options: ServerOptions): ServerInstance {
     });
   }
 
-  // GET / - List markdown files
+  // GET / - List markdown files (including subdirectories)
   app.get('/', (_req, res) => {
-    const files = readdirSync(publicDir).filter((file) => file.endsWith('.md'));
+    const files = scanMarkdownFiles(publicDir);
 
     const fileList = files
-      .map((file) => `<li><a href="/${file}">${file}</a></li>`)
+      .map((file) => `<li><a href="/${file.relativePath}">${file.relativePath}</a></li>`)
       .join('\n');
 
     const content = `
@@ -79,19 +80,23 @@ export function createServer(options: ServerOptions): ServerInstance {
     res.type('html').send(html);
   });
 
-  // GET /:filename.md - Serve markdown file as HTML
-  app.get('/:filename.md', (req, res) => {
-    const filename = req.params.filename + '.md';
-    const filepath = join(publicDir, filename);
+  // GET /*.md - Serve markdown file as HTML (supports subdirectories)
+  app.get('/*.md', (req, res) => {
+    const requestPath = req.params[0] + '.md';
+    const validation = validateAndResolvePath(requestPath, publicDir);
 
-    if (!existsSync(filepath)) {
-      res.status(404).send('File not found');
+    if (!validation.valid) {
+      if (validation.error?.includes('not found')) {
+        res.status(404).send('File not found');
+      } else {
+        res.status(400).send(validation.error || 'Invalid path');
+      }
       return;
     }
 
-    const markdown = readFileSync(filepath, 'utf-8');
+    const markdown = readFileSync(validation.resolvedPath!, 'utf-8');
     const htmlContent = convertMarkdownToHtml(markdown);
-    const html = injectReloadScript(wrapWithHtmlTemplate(htmlContent, filename));
+    const html = injectReloadScript(wrapWithHtmlTemplate(htmlContent, requestPath));
 
     res.type('html').send(html);
   });

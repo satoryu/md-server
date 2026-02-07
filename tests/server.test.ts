@@ -9,14 +9,20 @@ import type { Express } from 'express';
 
 describe('server', () => {
   const testDir = join(tmpdir(), 'md-server-test-' + Date.now());
+  const subDir = join(testDir, 'docs');
+  const nestedDir = join(testDir, 'guides', 'advanced');
   let serverInstance: ServerInstance;
   let app: Express;
 
   beforeAll(() => {
     // Create test directory with sample markdown files
     mkdirSync(testDir, { recursive: true });
+    mkdirSync(subDir, { recursive: true });
+    mkdirSync(nestedDir, { recursive: true });
     writeFileSync(join(testDir, 'README.md'), '# README\n\nThis is a readme.');
     writeFileSync(join(testDir, 'test.md'), '# Test\n\n**Bold text**');
+    writeFileSync(join(subDir, 'guide.md'), '# Guide\n\nA guide document.');
+    writeFileSync(join(nestedDir, 'deep.md'), '# Deep\n\nDeeply nested file.');
 
     serverInstance = createServer({ publicDir: testDir });
     app = serverInstance.app;
@@ -34,6 +40,13 @@ describe('server', () => {
       expect(response.status).toBe(200);
       expect(response.text).toContain('README.md');
       expect(response.text).toContain('test.md');
+    });
+
+    it('should include subdirectory files in list', async () => {
+      const response = await request(app).get('/');
+      expect(response.status).toBe(200);
+      expect(response.text).toContain('docs/guide.md');
+      expect(response.text).toContain('guides/advanced/deep.md');
     });
 
     it('should return HTML content type', async () => {
@@ -58,6 +71,53 @@ describe('server', () => {
 
     it('should return 404 for non-existent file', async () => {
       const response = await request(app).get('/nonexistent.md');
+      expect(response.status).toBe(404);
+    });
+  });
+
+  describe('GET /subdir/*.md (subdirectory support)', () => {
+    it('should return markdown from subdirectory', async () => {
+      const response = await request(app).get('/docs/guide.md');
+      expect(response.status).toBe(200);
+      expect(response.text).toContain('<h1>Guide</h1>');
+      expect(response.text).toContain('A guide document.');
+    });
+
+    it('should return markdown from deeply nested directory', async () => {
+      const response = await request(app).get('/guides/advanced/deep.md');
+      expect(response.status).toBe(200);
+      expect(response.text).toContain('<h1>Deep</h1>');
+      expect(response.text).toContain('Deeply nested file.');
+    });
+
+    it('should return 404 for non-existent file in subdirectory', async () => {
+      const response = await request(app).get('/docs/nonexistent.md');
+      expect(response.status).toBe(404);
+    });
+
+    it('should return 404 for non-existent subdirectory', async () => {
+      const response = await request(app).get('/nonexistent/file.md');
+      expect(response.status).toBe(404);
+    });
+  });
+
+  describe('path traversal protection', () => {
+    it('should not serve files outside public directory (path normalized by Express)', async () => {
+      // Express normalizes /../ paths, so this becomes /etc/passwd.md
+      // which doesn't exist in publicDir, hence 404
+      const response = await request(app).get('/../etc/passwd.md');
+      expect(response.status).toBe(404);
+    });
+
+    it('should not serve files with URL-encoded traversal (normalized by Express)', async () => {
+      // Express decodes and normalizes the path
+      const response = await request(app).get('/%2e%2e/etc/passwd.md');
+      expect(response.status).toBe(404);
+    });
+
+    it('should not allow accessing parent via subdirectory traversal', async () => {
+      // /docs/../../../etc/passwd.md normalizes to /etc/passwd.md (outside publicDir)
+      const response = await request(app).get('/docs/../../../etc/passwd.md');
       expect(response.status).toBe(404);
     });
   });

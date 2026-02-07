@@ -1,10 +1,20 @@
 import { existsSync, statSync } from 'node:fs';
 import { resolve, normalize, sep } from 'node:path';
 
+export type PathValidationErrorType =
+  | 'invalid_encoding'
+  | 'path_traversal'
+  | 'outside_public_dir'
+  | 'not_found'
+  | 'not_file'
+  | 'not_markdown'
+  | 'unknown';
+
 export interface PathValidationResult {
   valid: boolean;
   resolvedPath?: string;
   error?: string;
+  errorType?: PathValidationErrorType;
 }
 
 /**
@@ -25,7 +35,11 @@ export function validateAndResolvePath(
     try {
       decodedPath = decodeURIComponent(requestPath);
     } catch {
-      return { valid: false, error: 'Invalid path: malformed URL encoding' };
+      return {
+        valid: false,
+        error: 'Invalid path: malformed URL encoding',
+        errorType: 'invalid_encoding',
+      };
     }
 
     // Remove leading slash if present
@@ -35,15 +49,23 @@ export function validateAndResolvePath(
 
     // Check for path traversal attempts before normalization
     if (decodedPath.includes('..')) {
-      return { valid: false, error: 'Invalid path: path traversal not allowed' };
+      return {
+        valid: false,
+        error: 'Invalid path: path traversal not allowed',
+        errorType: 'path_traversal',
+      };
     }
 
     // Normalize and resolve the path
     const normalizedPath = normalize(decodedPath);
 
     // Check again after normalization (catches edge cases)
-    if (normalizedPath.includes('..') || normalizedPath.startsWith('..')) {
-      return { valid: false, error: 'Invalid path: path traversal not allowed' };
+    if (normalizedPath.includes('..')) {
+      return {
+        valid: false,
+        error: 'Invalid path: path traversal not allowed',
+        errorType: 'path_traversal',
+      };
     }
 
     // Resolve to absolute path
@@ -52,23 +74,31 @@ export function validateAndResolvePath(
 
     // Ensure resolved path is within publicDir
     if (!resolvedPath.startsWith(resolvedPublicDir + sep) && resolvedPath !== resolvedPublicDir) {
-      return { valid: false, error: 'Invalid path: access outside public directory not allowed' };
+      return {
+        valid: false,
+        error: 'Invalid path: access outside public directory not allowed',
+        errorType: 'outside_public_dir',
+      };
     }
 
     // Check if file exists
     if (!existsSync(resolvedPath)) {
-      return { valid: false, error: 'File not found' };
+      return { valid: false, error: 'File not found', errorType: 'not_found' };
     }
 
     // Check if it's a file (not a directory)
     const stats = statSync(resolvedPath);
     if (!stats.isFile()) {
-      return { valid: false, error: 'Path is not a file' };
+      return { valid: false, error: 'Path is not a file', errorType: 'not_file' };
     }
 
     // Check if it's a markdown file
     if (!resolvedPath.endsWith('.md')) {
-      return { valid: false, error: 'Only Markdown files (.md) are allowed' };
+      return {
+        valid: false,
+        error: 'Only Markdown files (.md) are allowed',
+        errorType: 'not_markdown',
+      };
     }
 
     return { valid: true, resolvedPath };
@@ -76,6 +106,7 @@ export function validateAndResolvePath(
     return {
       valid: false,
       error: `Invalid path: ${error instanceof Error ? error.message : 'unknown error'}`,
+      errorType: 'unknown',
     };
   }
 }

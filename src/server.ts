@@ -1,6 +1,6 @@
 import express, { type Express, type Response } from 'express';
 import { readFileSync } from 'node:fs';
-import { convertMarkdownToHtml, wrapWithHtmlTemplate } from './markdown.js';
+import { convertMarkdownToHtml, wrapWithHtmlTemplate, escapeHtml } from './markdown.js';
 import { createWatcher, type FileWatcher } from './watcher.js';
 import { getReloadScript } from './reload-script.js';
 import { validateAndResolvePath } from './path-validator.js';
@@ -66,7 +66,10 @@ export function createServer(options: ServerOptions): ServerInstance {
     const files = scanMarkdownFiles(publicDir);
 
     const fileList = files
-      .map((file) => `<li><a href="/${file.relativePath}">${file.relativePath}</a></li>`)
+      .map((file) => {
+        const escaped = escapeHtml(file.relativePath);
+        return `<li><a href="/${encodeURI(file.relativePath)}">${escaped}</a></li>`;
+      })
       .join('\n');
 
     const content = `
@@ -86,7 +89,7 @@ export function createServer(options: ServerOptions): ServerInstance {
     const validation = validateAndResolvePath(requestPath, publicDir);
 
     if (!validation.valid) {
-      if (validation.error?.includes('not found')) {
+      if (validation.errorType === 'not_found') {
         res.status(404).send('File not found');
       } else {
         res.status(400).send(validation.error || 'Invalid path');

@@ -7,7 +7,7 @@ This package provides a tiny web server for publishing documents written in Mark
 ## Getting Started
 
 ```bash
-npm install -g md-server
+npm install -g @satoryu/md-server
 cd /path/to/your/markdown/documents/
 mds
 ```

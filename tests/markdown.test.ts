@@ -64,6 +64,30 @@ describe('markdown', () => {
         expect(html).toContain('language-python');
       });
     });
+
+    describe('mermaid rendering', () => {
+      it('should output mermaid code block as <pre class="mermaid">', () => {
+        const markdown = '```mermaid\ngraph TD\n  A --> B\n```';
+        const html = convertMarkdownToHtml(markdown);
+        expect(html).toContain('<pre class="mermaid">');
+        expect(html).toContain('graph TD');
+        expect(html).toContain('A --> B');
+      });
+
+      it('should not apply highlight.js to mermaid code blocks', () => {
+        const markdown = '```mermaid\ngraph TD\n  A --> B\n```';
+        const html = convertMarkdownToHtml(markdown);
+        expect(html).not.toContain('hljs');
+        expect(html).not.toContain('<code');
+      });
+
+      it('should still highlight normal code blocks when mermaid blocks exist', () => {
+        const markdown = '```mermaid\ngraph TD\n  A --> B\n```\n\n```javascript\nconst x = 42;\n```';
+        const html = convertMarkdownToHtml(markdown);
+        expect(html).toContain('<pre class="mermaid">');
+        expect(html).toContain('hljs');
+      });
+    });
   });
 
   describe('wrapWithHtmlTemplate', () => {
@@ -89,6 +113,13 @@ describe('markdown', () => {
     it('should include highlight.js theme styles', () => {
       const html = wrapWithHtmlTemplate('<p>Content</p>', 'Title');
       expect(html).toContain('.hljs');
+    });
+
+    it('should include Mermaid.js CDN script', () => {
+      const html = wrapWithHtmlTemplate('<p>Content</p>', 'Title');
+      expect(html).toContain('mermaid');
+      expect(html).toContain('<script');
+      expect(html).toContain('cdn.jsdelivr.net/npm/mermaid');
     });
   });
 });

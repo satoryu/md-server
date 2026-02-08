@@ -3,6 +3,9 @@ import hljs from 'highlight.js';
 
 const renderer = new Renderer();
 renderer.code = function ({ text, lang }: { text: string; lang?: string }) {
+  if (lang === 'mermaid') {
+    return `<pre class="mermaid">${text}</pre>\n`;
+  }
   if (lang && hljs.getLanguage(lang)) {
     const highlighted = hljs.highlight(text, { language: lang }).value;
     return `<pre><code class="hljs language-${lang}">${highlighted}</code></pre>\n`;
@@ -84,6 +87,10 @@ export function wrapWithHtmlTemplate(content: string, title: string): string {
 </head>
 <body>
   ${content}
+  <script type="module">
+    import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.esm.min.mjs';
+    mermaid.initialize({ startOnLoad: true });
+  </script>
 </body>
 </html>`;
 }

@@ -1,15 +1,17 @@
 {
-  "name": "md-server",
+  "name": "@satoryu/md-server",
   "version": "0.0.1",
   "description": "A tiny web server for publishing documents written in Markdown",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
   "bin": {
     "mds": "dist/cli.js"
   },
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "dev": "tsx src/cli.ts",
     "build": "tsc",
+    "prepublishOnly": "npm run build",
     "test": "vitest",
     "test:run": "vitest run",
     "typecheck": "tsc --noEmit"
@@ -20,8 +22,16 @@
     "web",
     "html"
   ],
-  "author": "",
+  "author": "satoryu",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/satoryu/md-server.git"
+  },
+  "homepage": "https://github.com/satoryu/md-server#readme",
+  "bugs": {
+    "url": "https://github.com/satoryu/md-server/issues"
+  },
   "dependencies": {
     "chokidar": "^4.0.0",
     "commander": "^12.0.0",

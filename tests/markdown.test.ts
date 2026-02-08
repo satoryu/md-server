@@ -31,7 +31,38 @@ describe('markdown', () => {
       const markdown = '```js\nconsole.log("hello");\n```';
       const html = convertMarkdownToHtml(markdown);
       expect(html).toContain('<pre>');
-      expect(html).toContain('console.log');
+      expect(html).toContain('console');
+      expect(html).toContain('log');
+    });
+
+    describe('syntax highlighting', () => {
+      it('should highlight code blocks with a known language', () => {
+        const markdown = '```javascript\nconst x = 42;\n```';
+        const html = convertMarkdownToHtml(markdown);
+        expect(html).toContain('hljs');
+        expect(html).toContain('<span');
+      });
+
+      it('should highlight code blocks without a language using auto-detection', () => {
+        const markdown = '```\nfunction hello() { return "world"; }\n```';
+        const html = convertMarkdownToHtml(markdown);
+        expect(html).toContain('<pre>');
+        expect(html).toContain('<code');
+        expect(html).toContain('hello');
+      });
+
+      it('should handle code blocks with an unknown language gracefully', () => {
+        const markdown = '```unknownlang123\nsome random code\n```';
+        const html = convertMarkdownToHtml(markdown);
+        expect(html).toContain('<pre>');
+        expect(html).toContain('some random code');
+      });
+
+      it('should add language class to code element for known languages', () => {
+        const markdown = '```python\nprint("hello")\n```';
+        const html = convertMarkdownToHtml(markdown);
+        expect(html).toContain('language-python');
+      });
     });
   });
 
@@ -53,6 +84,11 @@ describe('markdown', () => {
     it('should include basic styles', () => {
       const html = wrapWithHtmlTemplate('<p>Content</p>', 'Title');
       expect(html).toContain('<style>');
+    });
+
+    it('should include highlight.js theme styles', () => {
+      const html = wrapWithHtmlTemplate('<p>Content</p>', 'Title');
+      expect(html).toContain('.hljs');
     });
   });
 });

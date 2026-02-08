@@ -42,7 +42,7 @@ export function wrapWithHtmlTemplate(content: string, title: string): string {
       color: #333;
     }
     /* highlight.js GitHub theme */
-    pre code.hljs{display:block;overflow-x:auto;padding:1em}
+    pre code.hljs{display:block;overflow-x:auto;padding:0}
     code.hljs{padding:3px 5px}
     .hljs{color:#24292e;background:#f6f8fa}
     .hljs-doctag,.hljs-keyword,.hljs-meta .hljs-keyword,.hljs-template-tag,.hljs-template-variable,.hljs-type,.hljs-variable.language_{color:#d73a49}

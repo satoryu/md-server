@@ -5,6 +5,7 @@ import { createWatcher, type FileWatcher } from './watcher.js';
 import { getReloadScript } from './reload-script.js';
 import { validateAndResolvePath } from './path-validator.js';
 import { scanMarkdownFiles } from './file-scanner.js';
+import { requestLogger } from './logger.js';
 
 export interface ServerOptions {
   publicDir: string;
@@ -25,6 +26,8 @@ export function createServer(options: ServerOptions): ServerInstance {
   let watcher: FileWatcher | null = null;
   let heartbeatInterval: ReturnType<typeof setInterval> | null = null;
   const sseClients: Set<SSEClient> = new Set();
+
+  app.use(requestLogger());
 
   const injectReloadScript = (html: string): string => {
     if (!watch) return html;

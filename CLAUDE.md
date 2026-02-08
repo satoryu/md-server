@@ -1,4 +1,4 @@
-# CLAUDE.mds
+# CLAUDE.md
 
 ## Tech Stacks
 

@@ -131,6 +131,91 @@ describe('server', () => {
   });
 });
 
+describe('server with .mdsignore', () => {
+  const ignoreTestDir = join(tmpdir(), 'md-server-ignore-test-' + Date.now());
+  const draftsDir = join(ignoreTestDir, 'drafts');
+  let serverInstance: ServerInstance;
+  let app: Express;
+
+  beforeAll(() => {
+    mkdirSync(ignoreTestDir, { recursive: true });
+    mkdirSync(draftsDir, { recursive: true });
+    writeFileSync(join(ignoreTestDir, 'README.md'), '# README');
+    writeFileSync(join(ignoreTestDir, 'secret.md'), '# Secret');
+    writeFileSync(join(draftsDir, 'draft.md'), '# Draft');
+    writeFileSync(join(ignoreTestDir, '.mdsignore'), 'secret.md\ndrafts/\n');
+
+    serverInstance = createServer({ publicDir: ignoreTestDir });
+    app = serverInstance.app;
+  });
+
+  afterAll(async () => {
+    await serverInstance.close();
+    rmSync(ignoreTestDir, { recursive: true, force: true });
+  });
+
+  describe('GET /', () => {
+    it('should not list ignored files', async () => {
+      const response = await request(app).get('/');
+      expect(response.status).toBe(200);
+      expect(response.text).toContain('README.md');
+      expect(response.text).not.toContain('secret.md');
+      expect(response.text).not.toContain('drafts/draft.md');
+    });
+  });
+
+  describe('GET /*.md', () => {
+    it('should return 404 for ignored files', async () => {
+      const response = await request(app).get('/secret.md');
+      expect(response.status).toBe(404);
+    });
+
+    it('should return 404 for files in ignored directories', async () => {
+      const response = await request(app).get('/drafts/draft.md');
+      expect(response.status).toBe(404);
+    });
+
+    it('should serve non-ignored files normally', async () => {
+      const response = await request(app).get('/README.md');
+      expect(response.status).toBe(200);
+      expect(response.text).toContain('<h1>README</h1>');
+    });
+  });
+});
+
+describe('server without .mdsignore', () => {
+  const noIgnoreTestDir = join(tmpdir(), 'md-server-no-ignore-test-' + Date.now());
+  let serverInstance: ServerInstance;
+  let app: Express;
+
+  beforeAll(() => {
+    mkdirSync(noIgnoreTestDir, { recursive: true });
+    writeFileSync(join(noIgnoreTestDir, 'README.md'), '# README');
+    writeFileSync(join(noIgnoreTestDir, 'notes.md'), '# Notes');
+
+    serverInstance = createServer({ publicDir: noIgnoreTestDir });
+    app = serverInstance.app;
+  });
+
+  afterAll(async () => {
+    await serverInstance.close();
+    rmSync(noIgnoreTestDir, { recursive: true, force: true });
+  });
+
+  it('should list all files when no .mdsignore exists', async () => {
+    const response = await request(app).get('/');
+    expect(response.status).toBe(200);
+    expect(response.text).toContain('README.md');
+    expect(response.text).toContain('notes.md');
+  });
+
+  it('should serve all files when no .mdsignore exists', async () => {
+    const response = await request(app).get('/notes.md');
+    expect(response.status).toBe(200);
+    expect(response.text).toContain('<h1>Notes</h1>');
+  });
+});
+
 describe('server with watch mode', () => {
   const watchTestDir = join(tmpdir(), 'md-server-watch-test-' + Date.now());
   let serverInstance: ServerInstance;

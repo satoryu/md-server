@@ -23,7 +23,7 @@
 
 This document contains the requirements for the issue number `[ISSUE-NUMBER]`, including the following sections:
 - Problem Statement
-- Requirements
+- Requirements(Functional and Non-Functional)
 - Constraints
 - Acceptance Criteria
 - User Stories

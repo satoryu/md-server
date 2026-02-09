@@ -100,4 +100,25 @@ describe('scanMarkdownFiles', () => {
     expect(readmeFile).toBeDefined();
     expect(readmeFile?.directory).toBe('');
   });
+
+  it('should exclude files matched by ignore filter', () => {
+    const isIgnored = (relativePath: string) => relativePath === 'README.md' || relativePath.startsWith('docs/');
+    const files = scanMarkdownFiles(testDir, isIgnored);
+    const relativePaths = files.map((f) => f.relativePath);
+
+    expect(relativePaths).not.toContain('README.md');
+    expect(relativePaths).not.toContain('docs/guide.md');
+    expect(relativePaths).not.toContain('docs/api.md');
+    expect(relativePaths).toContain('index.md');
+    expect(relativePaths).toContain('guides/advanced/deep.md');
+  });
+
+  it('should return all files when no ignore filter is provided', () => {
+    const files = scanMarkdownFiles(testDir);
+    const relativePaths = files.map((f) => f.relativePath);
+
+    expect(relativePaths).toContain('README.md');
+    expect(relativePaths).toContain('docs/guide.md');
+    expect(relativePaths).toContain('guides/advanced/deep.md');
+  });
 });

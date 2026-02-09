@@ -21,7 +21,7 @@ export interface MarkdownFile {
  * @param publicDir - The root directory to scan
  * @returns Array of MarkdownFile objects
  */
-export function scanMarkdownFiles(publicDir: string): MarkdownFile[] {
+export function scanMarkdownFiles(publicDir: string, isIgnored?: (relativePath: string) => boolean): MarkdownFile[] {
   const files: MarkdownFile[] = [];
 
   try {
@@ -35,6 +35,10 @@ export function scanMarkdownFiles(publicDir: string): MarkdownFile[] {
         const absolutePath = join(parentPath, entry.name);
         const relativePath = relative(publicDir, absolutePath);
         const directory = dirname(relativePath);
+
+        if (isIgnored && isIgnored(relativePath)) {
+          continue;
+        }
 
         files.push({
           relativePath,

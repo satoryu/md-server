@@ -5,6 +5,7 @@ import { createWatcher, type FileWatcher } from './watcher.js';
 import { getReloadScript } from './reload-script.js';
 import { validateAndResolvePath } from './path-validator.js';
 import { scanMarkdownFiles } from './file-scanner.js';
+import { createIgnoreFilter } from './ignore-filter.js';
 import { requestLogger } from './logger.js';
 
 export interface ServerOptions {
@@ -66,7 +67,8 @@ export function createServer(options: ServerOptions): ServerInstance {
 
   // GET / - List markdown files (including subdirectories)
   app.get('/', (_req, res) => {
-    const files = scanMarkdownFiles(publicDir);
+    const isIgnored = createIgnoreFilter(publicDir);
+    const files = scanMarkdownFiles(publicDir, isIgnored);
 
     const fileList = files
       .map((file) => {
@@ -97,6 +99,12 @@ export function createServer(options: ServerOptions): ServerInstance {
       } else {
         res.status(400).send(validation.error || 'Invalid path');
       }
+      return;
+    }
+
+    const isIgnored = createIgnoreFilter(publicDir);
+    if (isIgnored(requestPath)) {
+      res.status(404).send('File not found');
       return;
     }
 

@@ -9,7 +9,7 @@ This package provides a tiny web server for publishing documents written in Mark
 ```bash
 npm install -g @satoryu/md-server
 cd /path/to/your/markdown/documents/
-mds
+md-server
 ```
 
 This will start a web server at `http://localhost:3000` that converts the Markdown documents in the current directory to HTML and serves them.
@@ -17,7 +17,7 @@ This will start a web server at `http://localhost:3000` that converts the Markdo
 ## Usage
 
 ```bash
-mds --watch
+md-server --watch
 ```
 
 ### `--port <number>`
@@ -30,7 +30,7 @@ Watch the Markdown files for changes and automatically reload the server when ch
 
 ### `--public <path_to_directory>`
 
-Specify the directory in which `mds` publishes the Markdown documents.
+Specify the directory in which `md-server` publishes the Markdown documents.
 
 ## LICENSE
 

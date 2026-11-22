@@ -7,7 +7,7 @@ import { validatePublicDir } from './public-dir.js';
 const program = new Command();
 
 program
-  .name('mds')
+  .name('md-server')
   .description('A tiny web server for publishing Markdown documents')
   .version('0.0.1')
   .option('-p, --port <number>', 'port number to listen on', '3000')

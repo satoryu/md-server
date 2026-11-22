@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "description": "A tiny web server for publishing documents written in Markdown",
   "bin": {
-    "mds": "dist/cli.js"
+    "md-server": "dist/cli.js"
   },
   "files": [
     "dist"

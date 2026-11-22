@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.2.0] - 2026-11-22
+
+### Changed
+- **BREAKING**: Rename the CLI command from `mds` to `md-server` to avoid conflicts with existing commands (e.g. macOS Spotlight's `mds`)
+
 ## [0.1.0] - 2026-02-15
 
 ### Added
